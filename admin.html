@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Control - Taller Mecánico</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; justify-content: center; }
+    .container { background: white; max-width: 500px; width: 100%; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h2 { text-align: center; color: #1a202c; margin-top: 0; }
+    .input-group { margin-bottom: 15px; }
+    label { display: block; font-weight: bold; margin-bottom: 5px; color: #4a5568; font-size: 14px; }
+    input, select, textarea { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; }
+    button { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; background: #2b6cb0; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 5px; }
+    button:hover { background: #2c5282; }
+    .btn-secondary { background: #4a5568; margin-top: 10px; }
+    .btn-secondary:hover { background: #2d3748; }
+    .card-vehiculo { background: #edf2f7; padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 5px solid #2b6cb0; }
+    .hidden { display: none; }
+    .error { color: #e53e3e; text-align: center; font-weight: bold; margin-top: 10px; }
+    .success { color: #38a169; text-align: center; font-weight: bold; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- VISTA 1: LOGIN -->
+    <div id="loginView">
+      <h2>🔐 Acceso Exclusivo Taller</h2>
+      <p style="text-align: center; color: #718096; font-size: 14px;">Ingresa la contraseña asignada a tu taller para administrar los vehículos.</p>
+      <div class="input-group">
+        <label>Contraseña del Taller:</label>
+        <input type="password" id="pinInput" placeholder="Ej. 1234">
+      </div>
+      <button onclick="verificarLogin()">Ingresar al Panel</button>
+      <div id="loginError" class="error"></div>
+    </div>
+
+    <!-- VISTA 2: MENÚ PRINCIPAL -->
+    <div id="menuView" class="hidden">
+      <h2>🛠️ Panel del Mecánico</h2>
+      <p style="text-align: center; color: #718096;">Taller Activo: <strong id="nombreTallerTxt"></strong></p>
+      <button onclick="mostrarVista('verTaller')" style="margin-bottom: 15px; background: #3182ce;">🚗 Ver y Actualizar Taller</button>
+      <button onclick="mostrarVista('agregarTaller')" style="background: #38a169;">➕ Agregar Vehículo al Taller</button>
+      <button onclick="cerrarSesion()" class="btn-secondary">Cerrar Sesión</button>
+    </div>
+
+    <!-- VISTA 3: VER Y ACTUALIZAR TALLER -->
+    <div id="verTallerView" class="hidden">
+      <h2>🚗 Vehículos en Proceso</h2>
+      <div id="listaVehiculos" style="max-height: 400px; overflow-y: auto;">Cargando vehículos...</div>
+      <button onclick="mostrarVista('menu')" class="btn-secondary">← Volver al Menú</button>
+    </div>
+
+    <!-- VISTA 4: AGREGAR VEHÍCULO -->
+    <div id="agregarTallerView" class="hidden">
+      <h2>➕ Ingresar Nuevo Vehículo</h2>
+      <div class="input-group">
+        <label>Número de Placa:</label>
+        <input type="text" id="addPlaca" placeholder="Ej. P-123ABC" style="text-transform: uppercase;">
+      </div>
+      <div class="input-group">
+        <label>Descripción del Vehículo (Marca/Modelo):</label>
+        <input type="text" id="addVehiculo" placeholder="Ej. Toyota Corolla 2015">
+      </div>
+      <div class="input-group">
+        <label>Estado Inicial:</label>
+        <select id="addEstado">
+          <option value="En espera">En espera / Diagnóstico</option>
+          <option value="Cotizando repuestos">Cotizando repuestos</option>
+          <option value="En reparación">En reparación / Armando</option>
+          <option value="Pruebas finales">Pruebas finales / Lavado</option>
+          <option value="Listo para entregar">Listo para entregar</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Notas / Comentario inicial:</label>
+        <input type="text" id="addNotas" placeholder="Ej. Ingreso por cambio de aceite y frenos">
+      </div>
+      <button onclick="guardarVehiculo()" style="background: #38a169;">Guardar e Ingresar</button>
+      <div id="formMsg"></div>
+      <button onclick="mostrarVista('menu')" class="btn-secondary">← Volver al Menú</button>
+    </div>
+
+  </div>
+
+  <script>
+    // CONFIGURACIÓN DE TALLERES Y PIN (Puedes asignar una contraseña a cada taller)
+    const API_URL = "PEGA_AQUI_TU_URL_DE_APPS_SCRIPT"; 
+    
+    // Base de talleres autorizados con su PIN secreto
+    const TALLERES_AUTORIZADOS = {
+      "Demo_Taller": { pin: "1234", nombre: "Taller Automotriz Demo" },
+      // Aquí puedes agregar más talleres en el futuro:
+      // "Taller_Rodriguez": { pin: "5678", nombre: "Taller Mecánico Rodríguez" }
+    };
+
+    let tallerActual = "";
+
+    function verificarLogin() {
+      const pin = document.getElementById("pinInput").value.trim();
+      const errorDiv = document.getElementById("loginError");
+      
+      // Buscar qué taller corresponde al PIN ingresado
+      let encontrado = null;
+      for (let key in TALLERES_AUTORIZADOS) {
+        if (TALLERES_AUTORIZADOS[key].pin === pin) {
+          encontrado = key;
+          break;
+        }
+      }
+
+      if (encontrado) {
+        tallerActual = encontrado;
+        document.getElementById("nombreTallerTxt").innerText = TALLERES_AUTORIZADOS[encontrado].nombre;
+        errorDiv.innerText = "";
+        document.getElementById("pinInput").value = "";
+        mostrarVista('menu');
+      } else {
+        errorDiv.innerText = "❌ Contraseña incorrecta. Intenta nuevamente.";
+      }
+    }
+
+    function cerrarSesion() {
+      tallerActual = "";
+      mostrarVista('login');
+    }
+
+    function mostrarVista(vista) {
+      document.getElementById("loginView").classList.add("hidden");
+      document.getElementById("menuView").classList.add("hidden");
+      document.getElementById("verTallerView").classList.add("hidden");
+      document.getElementById("agregarTallerView").classList.add("hidden");
+
+      if (vista === 'login') document.getElementById("loginView").classList.remove("hidden");
+      if (vista === 'menu') document.getElementById("menuView").classList.remove("hidden");
+      if (vista === 'verTaller') {
+        document.getElementById("verTallerView").classList.remove("hidden");
+        cargarVehiculosTaller();
+      }
+      if (vista === 'agregarTaller') document.getElementById("agregarTallerView").classList.remove("hidden");
+    }
+
+    async function cargarVehiculosTaller() {
+      const contenedor = document.getElementById("listaVehiculos");
+      contenedor.innerHTML = "Cargando vehículos activos...";
+
+      try {
+        const res = await fetch(`${API_URL}?action=listar&taller=${tallerActual}`);
+        const data = await res.json();
+
+        if (data.encontrado && data.vehiculos.length > 0) {
+          contenedor.innerHTML = "";
+          data.vehiculos.forEach(v => {
+            contenedor.innerHTML += `
+              <div class="card-vehiculo">
+                <strong>🚗 ${v.vehiculo}</strong><br>
+                <span style="color:#2b6cb0; font-weight:bold;">Placa: ${v.placa}</span><br>
+                <small style="color:#718096;">Última actualización: ${v.actualizado || 'N/A'}</small><br><br>
+                
+                <label style="font-size:12px;">Cambiar Estado:</label>
+                <select id="est_${v.fila}" onchange="actualizarVehiculo(${v.fila})">
+                  <option value="En espera" ${v.estado === 'En espera' ? 'selected' : ''}>En espera / Diagnóstico</option>
+                  <option value="Cotizando repuestos" ${v.estado === 'Cotizando repuestos' ? 'selected' : ''}>Cotizando repuestos</option>
+                  <option value="En reparación" ${v.estado === 'En reparación' ? 'selected' : ''}>En reparación / Armando</option>
+                  <option value="Pruebas finales" ${v.estado === 'Pruebas finales' ? 'selected' : ''}>Pruebas finales / Lavado</option>
+                  <option value="Listo para entregar" ${v.estado === 'Listo para entregar' ? 'selected' : ''}>Listo para entregar</option>
+                </select>
+
+                <label style="font-size:12px; margin-top:8px;">Nota rápida:</label>
+                <input type="text" id="not_${v.fila}" value="${v.notas || ''}" placeholder="Escribe un comentario..." onchange="actualizarVehiculo(${v.fila})">
+              </div>
+            `;
+          });
+        } else {
+          contenedor.innerHTML = "<p style='text-align:center; color:#718096;'>No hay vehículos registrados en este taller actualmente.</p>";
+        }
+      } catch (e) {
+        contenedor.innerHTML = "<p class='error'>Error al conectar con el servidor.</p>";
+      }
+    }
+
+    async function actualizarVehiculo(fila) {
+      const nuevoEstado = document.getElementById(`est_${fila}`).value;
+      const nuevasNotas = document.getElementById(`not_${fila}`).value;
+
+      try {
+        await fetch(`${API_URL}?action=actualizar&taller=${tallerActual}&fila=${fila}&estado=${encodeURIComponent(nuevoEstado)}&notas=${encodeURIComponent(nuevasNotas)}`);
+      } catch (e) {
+        alert("Error al actualizar");
+      }
+    }
+
+    async function guardarVehiculo() {
+      const placa = document.getElementById("addPlaca").value.trim();
+      const vehiculo = document.getElementById("addVehiculo").value.trim();
+      const estado = document.getElementById("addEstado").value;
+      const notas = document.getElementById("addNotas").value.trim();
+      const msgDiv = document.getElementById("formMsg");
+
+      if (!placa || !vehiculo) {
+        msgDiv.innerHTML = "<p class='error'>Ingresa la placa y la descripción del vehículo.</p>";
+        return;
+      }
+
+      msgDiv.innerHTML = "<p style='color:#2b6cb0;'>Guardando...</p>";
+
+      try {
+        const res = await fetch(`${API_URL}?action=agregar&taller=${tallerActual}&placa=${encodeURIComponent(placa)}&vehiculo=${encodeURIComponent(vehiculo)}&estado=${encodeURIComponent(estado)}&notas=${encodeURIComponent(notas)}`);
+        const data = await res.json();
+
+        if (data.exito) {
+          msgDiv.innerHTML = "<p class='success'>¡Vehículo agregado con éxito!</p>";
+          document.getElementById("addPlaca").value = "";
+          document.getElementById("addVehiculo").value = "";
+          document.getElementById("addNotas").value = "";
+          setTimeout(() => { msgDiv.innerHTML = ""; }, 3000);
+        }
+      } catch (e) {
+        msgDiv.innerHTML = "<p class='error'>Error al guardar.</p>";
+      }
+    }
+  </script>
+</body>
+</html>
