@@ -41,7 +41,11 @@
       resDiv.innerHTML = "Buscando en el sistema del taller...";
 
       try {
-        const response = await fetch(`${API_URL}?taller=${NOMBRE_TALLER}&placa=${encodeURIComponent(placa)}`);
+        // 2. Agregamos { redirect: "follow" } para evitar el bloqueo de redirección de Google
+        const response = await fetch(`${API_URL}?taller=${NOMBRE_TALLER}&placa=${encodeURIComponent(placa)}`, {
+          method: "GET",
+          redirect: "follow"
+        });
         const data = await response.json();
 
         if (data.encontrado) {
