@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consulta tu Vehículo - Taller Demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; display: flex; justify-content: center; }
+    .card { background: white; max-width: 420px; width: 100%; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h1 { font-size: 22px; margin-top: 0; color: #1a202c; text-align: center; }
+    input { width: 100%; padding: 14px; font-size: 18px; text-transform: uppercase; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; text-align: center; margin-bottom: 12px; }
+    button { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; background: #2b6cb0; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    button:hover { background: #2c5282; }
+    #resultado { margin-top: 20px; display: none; padding: 15px; border-radius: 8px; background: #edf2f7; }
+    .badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; background: #3182ce; color: white; margin: 8px 0; }
+    .whatsapp { display: block; text-align: center; background: #25D366; color: white; text-decoration: none; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🔧 Taller Automotriz Demo</h1>
+    <p style="text-align:center; color:#4a5568;">Ingresa tu número de placa para ver el avance de tu vehículo:</p>
+    <input type="text" id="placaInput" placeholder="Ej. P-999XYZ">
+    <button onclick="consultarPlaca()">Consultar Estado</button>
+
+    <div id="resultado"></div>
+  </div>
+
+  <script>
+    // CONFIGURACIÓN POR TALLER (Solo cambias estas 3 líneas para cada cliente)
+    const API_URL = "https://script.google.com/macros/s/AKfycbyBTWpT69rbfY080v8X2lo7ogMNUhJl_jLlRjY8xfYC8XszAdlUR3zeW6xefB_E0cxN/exec";
+    const NOMBRE_TALLER = "Demo_Taller"; 
+    const WHATSAPP_TALLER = "50247178529";
+
+    async function consultarPlaca() {
+      const placa = document.getElementById("placaInput").value.trim();
+      const resDiv = document.getElementById("resultado");
+      if (!placa) return alert("Por favor ingresa un número de placa");
+
+      resDiv.style.display = "block";
+      resDiv.innerHTML = "Buscando en el sistema del taller...";
+
+      try {
+        const response = await fetch(`${API_URL}?taller=${NOMBRE_TALLER}&placa=${encodeURIComponent(placa)}`);
+        const data = await response.json();
+
+        if (data.encontrado) {
+          resDiv.innerHTML = `
+            <strong>Vehículo:</strong> ${data.vehiculo}<br>
+            <strong>Placa:</strong> ${data.placa}<br>
+            <div class="badge">Estado: ${data.estado}</div><br>
+            <strong>Detalle técnico:</strong> ${data.notas || "Sin observaciones"}<br>
+            <small style="color:#718096;">Actualizado: ${data.actualizado}</small>
+            <a class="whatsapp" href="https://wa.me/${WHATSAPP_TALLER}?text=Hola,%20consulto%20por%20mi%20vehículo%20placa%20${data.placa}" target="_blank">Hablar con el taller por WhatsApp</a>
+          `;
+        } else {
+          resDiv.innerHTML = "❌ No encontramos esa placa registrada actualmente en el taller. Verifica que esté bien escrita.";
+        }
+      } catch (err) {
+        resDiv.innerHTML = "⚠️ Error de conexión. Intenta nuevamente.";
+      }
+    }
+  </script>
+</body>
+</html>
