@@ -27,12 +27,11 @@
   </div>
 
   <script>
-    // CONFIGURACIÓN POR TALLER (Solo cambias estas 3 líneas para cada cliente)
     const API_URL = "https://script.google.com/macros/s/AKfycbyBTWpT69rbfY080v8X2lo7ogMNUhJl_jLlRjY8xfYC8XszAdlUR3zeW6xefB_E0cxN/exec";
-    const NOMBRE_TALLER = "Demo_Taller"; 
-    const WHATSAPP_TALLER = "50247178529";
+    const NOMBRE_TALLER = "Demo_Taller";
+    const WHATSAPP_TALLER = "50200000000";
 
-    async function consultarPlaca() {
+    function consultarPlaca() {
       const placa = document.getElementById("placaInput").value.trim();
       const resDiv = document.getElementById("resultado");
       if (!placa) return alert("Por favor ingresa un número de placa");
@@ -40,13 +39,12 @@
       resDiv.style.display = "block";
       resDiv.innerHTML = "Buscando en el sistema del taller...";
 
-      try {
-        // 2. Agregamos { redirect: "follow" } para evitar el bloqueo de redirección de Google
-        const response = await fetch(`${API_URL}?taller=${NOMBRE_TALLER}&placa=${encodeURIComponent(placa)}`, {
-          method: "GET",
-          redirect: "follow"
-        });
-        const data = await response.json();
+      const script = document.createElement("script");
+      const callbackName = "respuestaTaller_" + Date.now();
+
+      window[callbackName] = function(data) {
+        delete window[callbackName];
+        document.body.removeChild(script);
 
         if (data.encontrado) {
           resDiv.innerHTML = `
@@ -60,10 +58,15 @@
         } else {
           resDiv.innerHTML = "❌ No encontramos esa placa registrada actualmente en el taller. Verifica que esté bien escrita.";
         }
-      } catch (err) {
-        resDiv.innerHTML = "⚠️ Error de conexión. Intenta nuevamente.";
-      }
+      };
+
+      script.onerror = function() {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        resDiv.innerHTML = "⚠️ Error de conexión con Google Sheets.";
+      };
+
+      script.src = `${API_URL}?taller=${NOMBRE_TALLER}&placa=${encodeURIComponent(placa)}&callback=${callbackName}`;
+      document.body.appendChild(script);
     }
   </script>
-</body>
-</html>
