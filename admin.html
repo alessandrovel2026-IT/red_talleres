@@ -71,7 +71,7 @@
           <option value="En Reparacion">En reparacion</option>
           <option value="Armando">Armando</option>
           <option value="Pruebas Finales">Pruebas Finales / Lavado</option>
-          <option value="Listo para entrega">Listo para entrega</option>
+          <option value="Listo para la entrega">Listo para la entrega</option>
         </select>
       </div>
       <div class="input-group">
@@ -161,11 +161,12 @@
                 
                 <label style="font-size:12px;">Cambiar Estado:</label>
                 <select id="est_${v.fila}" onchange="actualizarVehiculo(${v.fila})">
-                  <option value="En espera" ${v.estado === 'En espera' ? 'selected' : ''}>En espera / Diagnóstico</option>
-                  <option value="Cotizando repuestos" ${v.estado === 'Cotizando repuestos' ? 'selected' : ''}>Cotizando repuestos</option>
-                  <option value="En reparación" ${v.estado === 'En reparación' ? 'selected' : ''}>En reparación / Armando</option>
-                  <option value="Pruebas finales" ${v.estado === 'Pruebas finales' ? 'selected' : ''}>Pruebas finales / Lavado</option>
-                  <option value="Listo para entregar" ${v.estado === 'Listo para entregar' ? 'selected' : ''}>Listo para entregar</option>
+                  <option value="En Espera" ${v.estado === 'En Espera' ? 'selected' : ''}>En Espera</option>
+                  <option value="Cotizando Repuestos" ${v.estado === 'Cotizando Repuestos' ? 'selected' : ''}>Cotizando Repuestos</option>
+                  <option value="En Reparacion" ${v.estado === 'En Reparacion' ? 'selected' : ''}>En Reparacion</option>
+                  <option value="Armado" ${v.estado === 'Armando' ? 'selected' : ''}>Armando</option>
+                  <option value="Pruebas Finales" ${v.estado === 'Pruebas Finales' ? 'selected' : ''}>Pruebas Finales</option>
+                  <option value="Listo para la entrega" ${v.estado === 'Listo para la entrega' ? 'selected' : ''}>Listo para la entrega</option>
                 </select>
 
                 <label style="font-size:12px; margin-top:8px;">Nota rápida:</label>
