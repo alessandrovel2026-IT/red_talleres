@@ -3,70 +3,128 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Consulta tu Vehículo - Taller Demo</title>
+  <title>Consulta tu Vehículo - Taller Mecánico</title>
   <style>
-    body { font-family: system-ui, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; display: flex; justify-content: center; }
-    .card { background: white; max-width: 420px; width: 100%; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    body { font-family: system-ui, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+    .card { background: white; max-width: 450px; width: 100%; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); box-sizing: border-box; margin-bottom: 20px; }
     h1 { font-size: 22px; margin-top: 0; color: #1a202c; text-align: center; }
     input { width: 100%; padding: 14px; font-size: 18px; text-transform: uppercase; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; text-align: center; margin-bottom: 12px; }
     button { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; background: #2b6cb0; color: white; border: none; border-radius: 8px; cursor: pointer; }
     button:hover { background: #2c5282; }
-    #resultado { margin-top: 20px; display: none; padding: 15px; border-radius: 8px; background: #edf2f7; }
-    .badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; background: #3182ce; color: white; margin: 8px 0; }
+    #resultado { margin-top: 20px; display: none; }
+    
+    /* Estilos de la Barra de Progreso */
+    .progress-container { display: flex; justify-content: space-between; margin: 20px 0; position: relative; }
+    .progress-container::before { content: ''; background: #e2e8f0; position: absolute; top: 15px; left: 10%; right: 10%; height: 4px; z-index: 1; }
+    .step { position: relative; z-index: 2; text-align: center; font-size: 11px; color: #a0aec0; width: 25%; }
+    .step-circle { width: 32px; height: 32px; background: #e2e8f0; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px auto; font-weight: bold; font-size: 14px; transition: 0.3s; }
+    .step.active .step-circle { background: #3182ce; box-shadow: 0 0 0 4px rgba(49,130,206,0.2); }
+    .step.active { color: #2b6cb0; font-weight: bold; }
+    .step.completed .step-circle { background: #38a169; }
+    .step.completed { color: #38a169; }
+
     .whatsapp { display: block; text-align: center; background: #25D366; color: white; text-decoration: none; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; }
+    
+    /* Espacio reservado para Banners de Anuncios (Plan Económico) */
+    .ad-banner { background: #edf2f7; border: 2px dashed #cbd5e0; color: #718096; text-align: center; padding: 15px; border-radius: 8px; max-width: 450px; width: 100%; box-sizing: border-box; font-size: 13px; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>🔧 Taller Automotriz Demo</h1>
-    <p style="text-align:center; color:#4a5568;">Ingresa tu número de placa para ver el avance de tu vehículo:</p>
+    <h1>🔧 Consulta de Estado</h1>
+    <p style="text-align:center; color:#4a5568; font-size: 14px;">Ingresa tu número de placa para ver el avance:</p>
     <input type="text" id="placaInput" placeholder="Ej. P-999XYZ">
     <button onclick="consultarPlaca()">Consultar Estado</button>
 
-    <div id="resultado"></div>
+    <div id="resultado">
+      <hr style="border:0; border-top:1px solid #e2e8f0; margin: 20px 0;">
+      <strong>Vehículo:</strong> <span id="vehiculoTxt"></span><br>
+      <strong>Placa:</strong> <span id="placaTxt"></span><br>
+      <strong>Observaciones:</strong> <span id="notasTxt"></span><br>
+      <small style="color:#718096; display:block; margin-top: 5px;" id="actualizadoTxt"></small>
+
+      <!-- BARRA DE PROCESO VISUAL -->
+      <div class="progress-container">
+        <div class="step" id="step1">
+          <div class="step-circle">1</div>
+          Diagnóstico
+        </div>
+        <div class="step" id="step2">
+          <div class="step-circle">2</div>
+          Repuestos
+        </div>
+        <div class="step" id="step3">
+          <div class="step-circle">3</div>
+          Reparación
+        </div>
+        <div class="step" id="step4">
+          <div class="step-circle">4</div>
+          Listo
+        </div>
+      </div>
+
+      <a class="whatsapp" id="whatsappBtn" href="#" target="_blank">Contactar al Taller por WhatsApp</a>
+    </div>
+  </div>
+
+  <!-- Banner de Anuncios (Se habilitará para talleres con suscripción económica con anuncios) -->
+  <div class="ad-banner">
+    📢 Espacio Publicitario / Anúnciate aquí <br>
+    <small>¿Tienes un taller o negocio? Contáctanos para aparecer en este espacio.</small>
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwswbClJHhmzCWKuMayeC8McM1h5jd2CiO2b4-BKJvDNjpoZtKLHQiNYCs8OxgjsEYl/exec";
-    const NOMBRE_TALLER = "Demo_Taller";
-    const WHATSAPP_TALLER = "50233009476";
+    const API_URL = "PEGA_AQUI_TU_URL_DE_APPS_SCRIPT";
+    const NOMBRE_TALLER = "Demo_Taller"; 
+    const WHATSAPP_TALLER = "50200000000";
 
-    function consultarPlaca() {
+    async function consultarPlaca() {
       const placa = document.getElementById("placaInput").value.trim();
       const resDiv = document.getElementById("resultado");
       if (!placa) return alert("Por favor ingresa un número de placa");
 
       resDiv.style.display = "block";
-      resDiv.innerHTML = "Buscando en el sistema del taller...";
+      document.getElementById("vehiculoTxt").innerText = "Buscando...";
 
-      const script = document.createElement("script");
-      const callbackName = "respuestaTaller_" + Date.now();
-
-      window[callbackName] = function(data) {
-        delete window[callbackName];
-        document.body.removeChild(script);
+      try {
+        const response = await fetch(`${API_URL}?action=buscar&taller=${NOMBRE_TALLER}&placa=${encodeURIComponent(placa)}`);
+        const data = await response.json();
 
         if (data.encontrado) {
-          resDiv.innerHTML = `
-            <strong>Vehículo:</strong> ${data.vehiculo}<br>
-            <strong>Placa:</strong> ${data.placa}<br>
-            <div class="badge">Estado: ${data.estado}</div><br>
-            <strong>Detalle técnico:</strong> ${data.notas || "Sin observaciones"}<br>
-            <small style="color:#718096;">Actualizado: ${data.actualizado}</small>
-            <a class="whatsapp" href="https://wa.me/${WHATSAPP_TALLER}?text=Hola,%20consulto%20por%20mi%20vehículo%20placa%20${data.placa}" target="_blank">Hablar con el taller por WhatsApp</a>
-          `;
+          document.getElementById("vehiculoTxt").innerText = data.vehiculo;
+          document.getElementById("placaTxt").innerText = data.placa;
+          document.getElementById("notasTxt").innerText = data.notas || "Sin observaciones";
+          document.getElementById("actualizadoTxt").innerText = "Actualizado: " + (data.actualizado || 'N/A');
+          document.getElementById("whatsappBtn.href") = `https://wa.me/${WHATSAPP_TALLER}?text=Hola,%20consulto%20por%20mi%20vehículo%20placa%20${data.placa}`;
+
+          actualizarBarraProgreso(data.estado);
         } else {
-          resDiv.innerHTML = "❌ No encontramos esa placa registrada actualmente en el taller. Verifica que esté bien escrita.";
+          resDiv.innerHTML = "❌ No encontramos esa placa registrada actualmente en el taller.";
         }
-      };
+      } catch (err) {
+        alert("Error de conexión con el servidor.");
+      }
+    }
 
-      script.onerror = function() {
-        delete window[callbackName];
-        document.body.removeChild(script);
-        resDiv.innerHTML = "⚠️ Error de conexión con Google Sheets.";
-      };
+    function actualizarBarraProgreso(estado) {
+      // Reiniciar clases
+      for(let i=1; i<=4; i++) {
+        let el = document.getElementById(`step${i}`);
+        el.className = "step";
+      }
 
-      script.src = `${API_URL}?taller=${NOMBRE_TALLER}&placa=${encodeURIComponent(placa)}&callback=${callbackName}`;
-      document.body.appendChild(script);
+      let nivel = 1;
+      if (estado === "En espera") nivel = 1;
+      else if (estado === "Cotizando repuestos") nivel = 2;
+      else if (estado === "En reparación") nivel = 3;
+      else if (estado === "Pruebas finales" || estado === "Listo para entregar") nivel = 4;
+
+      for(let i=1; i<=4; i++) {
+        let el = document.getElementById(`step${i}`);
+        if(i < nivel) el.classList.add("completed");
+        if(i === nivel) el.classList.add("active");
+      }
     }
   </script>
+</body>
+</html>
